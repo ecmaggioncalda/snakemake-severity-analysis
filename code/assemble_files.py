@@ -1,4 +1,4 @@
-file_name = "aggregated/"+snakemake.wildcards['cytokine']+".runs.csv"
+file_name = "aggregated/"+snakemake.wildcards['phenotype']+".runs.csv"
 
 import csv
 with open(file_name, 'wt',  newline= '') as out_file:
