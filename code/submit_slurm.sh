@@ -1,12 +1,12 @@
 #!/bin/bash
 
-#SBATCH --job-name=cyokine_GWAS
+#SBATCH --job-name=severity_GWAS
 
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=1GB
-#SBATCH --time=96:00:00
+#SBATCH --time=14-00:00:00
 
 #SBATCH --output=log/hpc/slurm-%j_%x.out
 
