@@ -1,9 +1,13 @@
 source("code/log_smk.R")
+library(tidyverse)
+library(mikropml)
 
 doFuture::registerDoFuture()
 future::plan(future::multicore, workers = snakemake@resources[["ncores"]])
 
-data_processed <- readRDS(snakemake@input[["rds"]])$dat_transformed
+data_processed <- readRDS(snakemake@input[["rds"]])$dat_transformed %>%
+  mutate(across(snakemake@params[['outcome_colname']],  ~if_else(.x == 0, "not_severe", "severe")))
+
 ml_results <- mikropml::run_ml(
   dataset = data_processed,
   method = snakemake@params[["method"]],
