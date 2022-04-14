@@ -4,8 +4,8 @@
 ._*
 
 # Session Data files
-.RData
-.Rproj
+*.RData
+*.Rproj
 
 # User-specific files
 .Ruserdata
@@ -44,14 +44,9 @@ vignettes/*.pdf
 test*
 
 #ignore large folders
-data/
-results/
-log/
-aggregated/
-benchmarks/
-figures/
-
-#ignore Rproj
-snakemake-cytokine-analysis.Rproj
-.snakemake/
-mikropml-snakemake-workflow/
+data/**
+results/**
+log/**
+aggregated/**
+benchmarks/**
+figures/**
