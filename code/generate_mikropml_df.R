@@ -45,6 +45,7 @@ if(snakemake@wildcards[['genome']] == "pan"){
 print("Geno matrix has completed read in")
 
 geno_merge <- t(geno)
+geno_merge <- geno_merge[rownames(geno_merge) %in% rownames(pheno_merge), ]
 
 if(sum(rownames(pheno_merge) %in% rownames(geno_merge)) != length(rownames(pheno_merge))){
   stop("mismatch between pheno and geno contents")
