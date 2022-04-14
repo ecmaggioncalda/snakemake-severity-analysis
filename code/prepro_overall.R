@@ -1,6 +1,6 @@
 # Builds individual phenotype file and generates necessary directories for snakemake workflow
 # This file would need to be updated based on the measures that the investigator is taking to adjust the continuous measure
-# In this example, cytokines of interest are adjusted based on association with weighted elix score
+# In this example, IDSA_severity is split into multiple separate data frames for analysis grouped by elix weighted score
 source("code/log_smk.R") #this assigns the log file for the run
 #LIBRARIES ----
 library(tidyverse)
@@ -21,6 +21,7 @@ paths <- paste0(c("data/pheno/",
                   "log/",
                   "data/mikropml/"),
                 phenotype_cols)
+paths <- c("data/pheno", "data/mikropml", paths)
 
 for(i in 1:length(paths)){
   
@@ -47,41 +48,79 @@ if(dir.exists(new_dir3) == FALSE){
     
   }
 
+if(!all(sapply(paths, dir.exists))){
+  stop("Not all directories created")
+}
+
 #UNADJUSTED FILE ----
 unadjusted_out <- pheno %>%
   select(genome_id,
-         all_of(phenotype_cols),
-         elix_weighted_update) %>%
-  drop_na() %>%
-  mutate(elix_weighted_update = NULL)
+         all_of(phenotype_cols))
   
-  write_tsv(unadjusted_out,
-            file = paste0("data/pheno/", phenotype_cols, "/raw.tsv"))
+write_tsv(unadjusted_out,
+          file = paste0("data/pheno/", phenotype_cols, "/full.tsv"))
 
-#EVALUATE SIGNIFICANT ELIX ASSOCIATIONS, GENERATE ADJUSTED ----
-  model <- paste0("summary(lm(",
-                  phenotype_cols,
-                  " ~ elix_weighted_update, data = pheno))")
+#GENERATE SPLIT SEVERITY FILES ----
+quartiles <- pheno %>%
+    select(elix_weighted_update) %>%
+    drop_na() %>%
+    deframe() %>%
+    quantile()
+
+q1 <- pheno %>%
+  filter(elix_weighted_update <= quartiles[2]) %>%
+  select(genome_id,
+         all_of(phenotype_cols))
+
+q2_3 <- pheno %>%
+  filter(elix_weighted_update > quartiles[2] & elix_weighted_update <= quartiles[4]) %>%
+  select(genome_id,
+         all_of(phenotype_cols))
+
+q4 <- pheno %>%
+  filter(elix_weighted_update > quartiles[4]) %>%
+  select(genome_id,
+         all_of(phenotype_cols))
+
+if(nrow(q1)+nrow(q2_3)+nrow(q4) != nrow(pheno)){
+  stop("quartile splits are missing data")
+}
+
+write_tsv(q1,
+          file = paste0("data/pheno/", phenotype_cols, "/q1.tsv"))
+write_tsv(q2_3,
+          file = paste0("data/pheno/", phenotype_cols, "/q2_3.tsv"))
+write_tsv(q4,
+          file = paste0("data/pheno/", phenotype_cols, "/q4.tsv"))
   
-  out_model <- eval(str2lang(model))
-  
-  out_coefs <- out_model$coefficients
-  
-  if(out_model$r.squared > 0.10){
-    
-    adjusted_out <- pheno %>%
-      mutate(adjusted_phenotype = eval(str2lang(phenotype_cols)) - (elix_weighted_update*out_coefs[2,1] + out_coefs[1,1])) %>%
-      #view()
-      select(genome_id,
-             adjusted_phenotype,
-             elix_weighted_update) %>%
-      drop_na() %>%
-      mutate(elix_weighted_update = NULL) #%>%
-      #view()
-    
-    colnames(adjusted_out) <- c("genome_id",
-                                phenotype_cols)
-    
-    write_tsv(adjusted_out,
-              file = paste0("data/pheno/", phenotype_cols, "/adjusted.tsv"))
-  }
+even_split <- pheno %>%
+    select(elix_weighted_update) %>%
+    drop_na() %>%
+    deframe() %>%
+    quantile(probs = seq(0, 1, 1/3))
+
+t1 <- pheno %>%
+  filter(elix_weighted_update <= even_split[2]) %>%
+  select(genome_id,
+         all_of(phenotype_cols))
+
+t2 <- pheno %>%
+  filter(elix_weighted_update > even_split[2] & elix_weighted_update <= even_split[3]) %>%
+  select(genome_id,
+         all_of(phenotype_cols))
+
+t3 <- pheno %>%
+  filter(elix_weighted_update > even_split[3]) %>%
+  select(genome_id,
+         all_of(phenotype_cols))
+
+if(nrow(t1)+nrow(t2)+nrow(t3) != nrow(pheno)){
+  stop("tertile splits are missing data")
+}
+
+write_tsv(t1,
+          file = paste0("data/pheno/", phenotype_cols, "/t1.tsv"))
+write_tsv(t2,
+          file = paste0("data/pheno/", phenotype_cols, "/t2.tsv"))
+write_tsv(t3,
+          file = paste0("data/pheno/", phenotype_cols, "/t3.tsv"))
