@@ -61,4 +61,5 @@ hogwash(pheno = pheno,
         geno = geno, 
         tree = tree, 
         file_name = snakemake@params[["file_name"]], 
-        dir = snakemake@params[["dir"]])
+        dir = snakemake@params[["dir"]],
+        test = "both")
