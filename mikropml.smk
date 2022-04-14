@@ -5,25 +5,26 @@
 rule preprocess_data:
     input:
         R="code/preproc.R",
-        csv="data/mikropml/{phenotype}/{group}.{genome}.csv"
+        csv="data/mikropml/{phenotype}/full.{genome}.csv", #I want the same full matrix going through preprocessing, only subset to specific strains from prepro_overall after this is complete
+        full="data/pheno/{phenotype}/full.tsv" #The full list of genomes to compare to when subsetting
     output:
         rds='data/mikropml/{phenotype}/{group}.{genome}.dat_proc.Rds'
     log:
         "log/{phenotype}/{group}.{genome}.preprocess_data.txt"
     benchmark:
-        "benchmarks/{phenotype}.{group}.{genome}.preprocess_data.txt"
+        "benchmarks/{phenotype}/{group}.{genome}.preprocess_data.txt"
     params:
         outcome_colname='{phenotype}'
     resources:
         ncores=ncores,
-        mem_mb = get_mem_mb_low
+        mem_mb = get_mem_mb_lowest
     script:
         "code/preproc.R"
 
 rule run_ml:
     input:
         R="code/ml.R",
-        rds=rules.preprocess_data.output.rds
+        rds=rules.preprocess_data.output.rds,
     output:
         model="results/{phenotype}/runs/{group}.{genome}.{method}_{seed}_model.Rds",
         perf=temp("results/{phenotype}/runs/{group}.{genome}.{method}_{seed}_performance.csv"),
@@ -36,6 +37,7 @@ rule run_ml:
         outcome_colname='{phenotype}',
         method="{method}",
         seed="{seed}",
+        group="{group}",
         kfold=kfold
     resources:
         ncores=ncores,
@@ -54,7 +56,7 @@ rule combine_results:
     benchmark:
         "benchmarks/{phenotype}/{group}.{genome}.combine_results_{type}.txt"
     resources:
-        mem_mb = get_mem_mb_low
+        mem_mb = get_mem_mb_lowest
     script:
         "code/combine_results.R"
 
@@ -69,7 +71,7 @@ rule combine_hp_performance:
     benchmark:
         "benchmarks/{phenotype}/{group}.{genome}.combine_hp_perf_{method}.txt"
     resources:
-        mem_mb = get_mem_mb_high
+        mem_mb = get_mem_mb_med
     script:
         "code/combine_hp_perf.R"
 
