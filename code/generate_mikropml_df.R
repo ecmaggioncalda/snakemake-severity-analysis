@@ -18,29 +18,39 @@ rownames(pheno_merge) <- pheno_merge$genome_id
 pheno_merge <- pheno_merge[, -1, drop = FALSE]
 
 #GENO ----
+paste0(snakemake@params[['path']])
+geno <- read.delim(file = snakemake@params[['path']],
+                   row.names = 1)
 
-if(snakemake@wildcards[['genome']] == "pan"){
-  
-  print(paste0("using pan genome path:", snakemake@params[['pan_path']]))
-  
-  geno <- read.delim(file = snakemake@params[['pan_path']],
-                     row.names = 1)
-  
-}else if(snakemake@wildcards[['genome']] == "core"){
-  
-  print(paste0("using core genome path:", snakemake@params[['core_path']]))
-  
-  geno <- read.delim(file = snakemake@params[['core_path']],
-                     row.names = 1)
-  
-}else if(snakemake@wildcards[['genome']] == "gene"){
-  
-  print(paste0("using gene genome path:", snakemake@params[['gene_path']]))
-  
-  geno <- read.delim(file = snakemake@params[['gene_path']],
-                     row.names = 1)
-  
-}
+# if(snakemake@wildcards[['genome']] == "pan"){
+#   
+#   print(paste0("using pan genome path:", snakemake@params[['pan_path']]))
+#   
+#   geno <- read.delim(file = snakemake@params[['pan_path']],
+#                      row.names = 1)
+#   
+# }else if(snakemake@wildcards[['genome']] == "core"){
+#   
+#   print(paste0("using core genome path:", snakemake@params[['core_path']]))
+#   
+#   geno <- read.delim(file = snakemake@params[['core_path']],
+#                      row.names = 1)
+#   
+# }else if(snakemake@wildcards[['genome']] == "gene"){
+#   
+#   print(paste0("using gene genome path:", snakemake@params[['gene_path']]))
+#   
+#   geno <- read.delim(file = snakemake@params[['gene_path']],
+#                      row.names = 1)
+#   
+# }else if(snakemake@wildcards[['genome']] == "struct"){
+#   
+#   print(paste0("using gene genome path:", snakemake@params[['struct_path']]))
+#   
+#   geno <- read.delim(file = snakemake@params[['struct_path']],
+#                      row.names = 1)
+#   
+# }
 
 print("Geno matrix has completed read in")
 

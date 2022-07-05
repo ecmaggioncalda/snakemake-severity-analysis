@@ -30,6 +30,9 @@ def get_mem_mb_high(wildcards, attempt):
      mem = attempt*8
      return "%dGB" % (mem)
 
+def get_geno_path(wildcards):
+    return config["genome"][wildcards.genome]
+
 rule all:
     input:
         expand("aggregated/{phenotype}.runs.csv", phenotype=phenotype)
@@ -50,6 +53,8 @@ checkpoint prepro_overall:
     resources:
         ncores = ncores,
         mem_mb = get_mem_mb_lowest
+    benchmark:
+        "benchmarks/{phenotype}/prepro_overall.txt"
     script:
         "code/prepro_overall.R"
 
@@ -63,14 +68,18 @@ rule generate_mikropml_df:
     wildcard_constraints:
         group = "full" #I want the same full matrix going through preprocessing, only subset to specific strains from prepro_overall after this is complete
     params:
-        core_path = config['core'],
-        pan_path = config['pan'],
-        gene_path = config['gene']
+        path = get_geno_path
+        # core_path = config['core'],
+        # pan_path = config['pan'],
+        # gene_path = config['gene'],
+        # struct_path = config['struct']
     log:
         "log/{phenotype}/{group}.{genome}.generate_mikropml_df.txt"
     resources:
         ncores = ncores,
         mem_mb = get_mem_mb_lowest
+    benchmark:
+        "benchmarks/{phenotype}/{group}.{genome}.generate_mikropml_df.txt"
     script:
         "code/generate_mikropml_df.R"
 
@@ -102,8 +111,8 @@ rule run_hogwash_ungrouped:
         pheno = "data/pheno/{phenotype}/{group}.tsv",
         rds = rules.preprocess_data.output.rds
     output:
-        rdata = expand("results/{{phenotype}}/{hogwash}.{{group}}.{{genome}}.ungrouped.rda", hogwash=hogwash),
-        plot = expand("results/{{phenotype}}/{hogwash}.{{group}}.{{genome}}.ungrouped.pdf", hogwash=hogwash)
+        rdata = expand("results/{{phenotype}}/{hogwash}_{{group}}.{{genome}}.ungrouped.rda", hogwash=hogwash),
+        plot = expand("results/{{phenotype}}/{hogwash}_{{group}}.{{genome}}.ungrouped.pdf", hogwash=hogwash)
     params:
         tree = tree,
         file_name = '{group}.{genome}.ungrouped',
@@ -114,7 +123,7 @@ rule run_hogwash_ungrouped:
         "log/{phenotype}/{group}.{genome}.hogwash.ungrouped.txt"
     resources:
         ncores = ncores,
-        mem_mb = get_mem_mb_low
+        mem_mb = get_mem_mb_high
     script:
         "code/run_hogwash_ungrouped.R"
 
@@ -153,7 +162,7 @@ def aggregate_input1(wildcards):
 
 def aggregate_input2(wildcards):
     checkpoint_output = checkpoints.prepro_overall.get(**wildcards).output[0]
-    return expand('results/{phenotype}/{hogwash}.{group}.{genome}.ungrouped.rda',
+    return expand('results/{phenotype}/{hogwash}_{group}.{genome}.ungrouped.rda',
         phenotype=wildcards.phenotype,
         group=glob_wildcards(os.path.join(checkpoint_output,"{group}.tsv")).group,
         genome=genome,
@@ -184,6 +193,8 @@ finish_list = [aggregate_input1, aggregate_input2, aggregate_input4]
 rule finish_test:
     input:
         finish_list
+        # aggregate_input1,
+        # aggregate_input2,
         # aggregate_input4
     output:
         "aggregated/{phenotype}.runs.csv"
