@@ -34,6 +34,8 @@ pheno <- pheno[, -1, drop = FALSE]
 # TREE ----
 tree <- read.tree(snakemake@params[["tree"]])
 
+tree <- drop.tip(tree, setdiff(tree$tip.label, rownames(pheno)))
+
 #ORDER DATA ----
 reorder_pheno <- match(tree$tip.label, rownames(pheno))
 
