@@ -16,4 +16,4 @@
 #SBATCH --mail-user=emilycma@umich.edu
 #SBATCH --mail-type=BEGIN,END
 
-time snakemake --profile config/slurm --latency-wait 90 --configfile config/config.yml --restart-times 5
+time snakemake --profile config/slurm --latency-wait 90 --configfile config/config.yml --restart-times 2
